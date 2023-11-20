@@ -19,39 +19,48 @@ def extract_links(url, html_content):
         links.add(absolute_url)
     return links
 
+def is_html_url(url):
+    """Check if the URL points to an HTML document."""
+    parsed_url = urlparse(url)
+    if parsed_url.path.endswith(('.gif', '.jpg', '.jpeg', '.png', '.svg', '.webp')):
+        return False
+
+    try:
+        response = requests.head(url, allow_redirects=True)
+        content_type = response.headers.get('Content-Type', '')
+        return 'text/html' in content_type
+    except requests.RequestException:
+        return False
+
 def extract_markdown_from_url(visited_links, element_id=None, element_class=None):
-    """
-    Downloads webpage content from the given URL, extracts a specific part of it,
-    and converts it to Markdown format.
-
-    Args:
-    url (str): URL of the webpage to download.
-    element_id (str, optional): ID of the HTML element to extract. Defaults to None.
-    element_class (str, optional): Class of the HTML element to extract. Defaults to None.
-
-    Returns:
-    str: Markdown content of the extracted part of the webpage.
-    """
+    markdown_contents = {}
+    
     for url, html_content in visited_links.items():
-        
-        # Parse HTML using BeautifulSoup
-        soup = BeautifulSoup(html_content, 'html.parser')
+        try:
+            soup = BeautifulSoup(html_content, 'html.parser')
 
-        # Extract relevant part of the webpage
-        if element_id:
-            main_content = soup.find(id=element_id)
-        elif element_class:
-            main_content = soup.find(class_=element_class)
-        else:
-            main_content = soup
+            # Remove unwanted tags and comments
+            for tag in soup(['script', 'style', 'header', 'footer', 'nav', 'aside', 'iframe', 'form']):
+                tag.decompose()
 
-        # Convert HTML to Markdown
-        converter = html2text.HTML2Text()
-        converter.ignore_links = False
-        markdown_content = converter.handle(str(main_content))
+            # Extract relevant part of the webpage
+            main_content = soup.find(id=element_id) if element_id else soup.find(class_=element_class) if element_class else soup
 
-        # Add Markdown content to the list
-        extracted_contents.append(markdown_content)
+            # Convert to text
+            text_content = main_content.get_text(separator='\n', strip=True)
+
+            # Convert to Markdown
+            converter = html2text.HTML2Text()
+            converter.ignore_links = False
+            markdown_content = converter.handle(text_content)
+
+            # Store in dictionary
+            markdown_contents[url] = f"***URL: {url}***\n\n{markdown_content}"
+        except Exception as e:
+            print(f"Error processing {url}: {e}")
+
+    return markdown_contents
+
 
 def is_same_domain(url1, url2):
     """ Check if two URLs belong to the same domain """
@@ -59,7 +68,7 @@ def is_same_domain(url1, url2):
 
 def crawl(url, visited={}):
     """ Crawl a URL and follow links within the same domain """
-    if url in visited:
+    if url in visited or not is_html_url(url):
         return
     try:
         time.sleep(2)
@@ -78,21 +87,44 @@ def crawl(url, visited={}):
     return visited
 
 # a function save each item in the list to a file
-def save_to_file(extracted_contents):
+def save_to_file(extracted_contents, file_name='output.txt', folder='output\\'):
     for item in extracted_contents:
-        with open('output.txt', 'a', encoding='utf-8') as f:
+        with open(folder + file_name, 'a', encoding='utf-8') as f:
             f.write(item)
 
 
-# Start crawling from a given URL
-start_url = 'https://viktoranchutin.github.io'
-visited_links = crawl(start_url)
-print(visited_links)
 
-extracted_contents = []
+def make_windows_compatible(filename):
+    """
+    Converts a string into a format compatible with Windows file naming conventions.
+    Strips invalid characters and replaces them with an underscore.
+    """
+    # Characters not allowed in Windows file names
+    invalid_chars = '<>:"/\\|?*'
 
-extract_markdown_from_url(visited_links)
+    # Replace each invalid character with an underscore
+    for char in invalid_chars:
+        filename = filename.replace(char, '_')
 
-save_to_file(extracted_contents)        
-        
-print(extracted_contents)
+    # Windows also doesn't allow file names to end with a space or a dot
+    filename = filename.rstrip('. ')
+
+    # Check for reserved file names and append an underscore if necessary
+    reserved_names = ["CON", "PRN", "AUX", "NUL", "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9", "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9"]
+    if filename.upper() in reserved_names:
+        filename += '_'
+
+    return filename
+
+# read list of urls from a file
+with open('list_of_blogs.txt', 'r') as f:
+    urls = f.read().splitlines()
+    
+# crawl each url and extract the content
+for url in urls:
+    extracted_contents = []
+    visited_links = crawl(url)
+    extract_markdown_from_url(visited_links)
+    filename = make_windows_compatible(url)
+    save_to_file(extracted_contents, file_name=filename + '.txt') 
+

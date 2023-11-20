@@ -1,0 +1,7 @@
+# fast ai prompt for structuring data 
+
+(The “topics covered” list was taken from the concatenation of the topic list of each lesson, and using GPT 4 with this prompt: “The input text contains a markdown list of topics discussed in a number of deep learning and stable diffusion lessons. The topics from each lesson were concatenated together into this list, therefore it may contain duplicates (or near dupes) and is not well organised. Create an organised markdown list which groups similar topics together (using a hierarchy or markdown list items as appropriate) and combine duplicate or very similar topics.” The “content summary” section was taken from the “topics covered” list, and the GPT 4 prompt “Summarise the following markdown course outline using 3-4 paragraphs of informal prose in the style of Jeremy Howard. Do not follow the same order as the topics in the outline, but instead arrange them such that the most foundational and key topics come first.”)
+
+
+# prompt for structuring data  
+The blogs are related to the study of deep learning and the aim is to organize and summarize each page.  The input contains markup language.  Create a organized markdown and summarize who the blog was written about and what they are about.   For each url write the url as their title along with description and a short description of what the aim was, overview and tools used and the findings.  
