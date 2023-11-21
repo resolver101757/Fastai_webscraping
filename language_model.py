@@ -4,7 +4,7 @@ import json
 from openai import OpenAI
 
 # Your OpenAI API key
-api_key = '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'
+api_key = ''
 # This code is for v1 of the openai package: pypi.org/project/openai
 client = OpenAI(api_key=api_key)
 
