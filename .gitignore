@@ -25,3 +25,6 @@ venv.bak/
 
 # Output folder (customize as per your folder name)
 output/
+
+# keys 
+api_key.txt
