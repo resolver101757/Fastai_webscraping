@@ -40,8 +40,8 @@ def extract_markdown_from_url(visited_links, element_id=None, element_class=None
             soup = BeautifulSoup(html_content, 'html.parser')
 
             # Remove unwanted tags and comments
-            for tag in soup(['script', 'style', 'header', 'footer', 'nav', 'aside', 'iframe', 'form']):
-                tag.decompose()
+            # for tag in soup(['script', 'style', 'header', 'footer', 'nav', 'aside', 'iframe', 'form']):
+            #     tag.decompose()
 
             # Extract relevant part of the webpage
             main_content = soup.find(id=element_id) if element_id else soup.find(class_=element_class) if element_class else soup
@@ -55,7 +55,7 @@ def extract_markdown_from_url(visited_links, element_id=None, element_class=None
             markdown_content = converter.handle(text_content)
 
             # Store in dictionary
-            markdown_contents[url] = f"***URL: {url}***\n\n{markdown_content}"
+            markdown_contents[url] = f"***URL: {url} ***\n\n{markdown_content}"
         except Exception as e:
             print(f"Error processing {url}: {e}")
 
@@ -66,7 +66,7 @@ def is_same_domain(url1, url2):
     """ Check if two URLs belong to the same domain """
     return urlparse(url1).netloc == urlparse(url2).netloc
 
-def crawl(url, visited={}):
+def crawl(url):
     """ Crawl a URL and follow links within the same domain """
     if url in visited or not is_html_url(url):
         return
@@ -80,7 +80,7 @@ def crawl(url, visited={}):
 
         for link in links:
             if is_same_domain(url, link):
-                crawl(link, visited)
+                crawl(link)
     except requests.RequestException:
         pass
 
@@ -122,8 +122,8 @@ with open('list_of_blogs.txt', 'r') as f:
     
 # crawl each url and extract the content
 for url in urls:
-    
-    visited_links = None
+    visited_links = {}
+    visited = {}
     visited_links = crawl(url)
     if visited_links:
         extracted_contents = extract_markdown_from_url(visited_links)
